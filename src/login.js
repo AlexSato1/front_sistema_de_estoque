@@ -1,39 +1,39 @@
 // Usuários predefinidos
 const users = {
     admin: {
-        password: '123456',
+        password: '932544231321',
         name: 'Administrador',
         role: 'admin',
         cargo: 'Administração',
         permissions: ['view', 'add', 'remove', 'restock']
     },
-    user2: {
-        password: '123456',
+    garcom: {
+        password: '4324213',
         name: 'João Silva',
         role: 'limited',
         cargo: 'Garçom',
-        permissions: ['view', 'remove']
+        permissions: ['remove']
     },
-    user3: {
-        password: '123456',
+    cozinha: {
+        password: '32132142',
         name: 'Maria Santos',
         role: 'limited',
         cargo: 'Cozinha',
-        permissions: ['view', 'remove']
+        permissions: ['remove']
     },
-    user4: {
-        password: '123456',
+    chefebar: {
+        password: '432421435211',
         name: 'Pedro Costa',
         role: 'limited',
         cargo: 'Bebidas',
-        permissions: ['view', 'remove']
-    },
-    user5: {
-        password: '123456',
-        name: 'Ana Oliveira',
-        role: 'limited',
-        cargo: 'Retirada e Reposição',
         permissions: ['view', 'remove', 'restock']
+    },
+    operator: {
+        password: '213213121',
+        name: 'Ana Souza',
+        role: 'limited',
+        cargo: 'Operador',
+        permissions: ['remove']
     }
 };
 

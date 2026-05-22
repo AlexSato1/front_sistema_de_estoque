@@ -17,7 +17,11 @@
             </div>
             
             <nav class="sidebar-menu">
-                <a href="#" class="menu-item active" data-page="estoque">
+                <a href="#" class="menu-item active" data-page="dashboard">
+                    <span class="icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="menu-item" data-page="estoque">
                     <span class="icon">📦</span>
                     <span>Estoque</span>
                 </a>
@@ -31,7 +35,11 @@
                 </a>
                 <a href="#" class="menu-item" data-page="repor" id="menuRepor">
                     <span class="icon">🔄</span>
-                    <span>Reposiçao</span>
+                    <span>Reposição</span>
+                </a>
+                <a href="#" class="menu-item" data-page="relatorio">
+                    <span class="icon">📈</span>
+                    <span>Relatório</span>
                 </a>
                 <a href="#" class="menu-item" data-page="historico">
                     <span class="icon">📋</span>
@@ -46,6 +54,57 @@
 
         <!-- Main Content -->
         <main class="main-content">
+            <!-- Página: Dashboard -->
+            <div id="page-dashboard" class="page active">
+                <div class="page-header">
+                    <h1>📊 Dashboard</h1>
+                </div>
+                
+                <div class="dashboard-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon">📦</div>
+                        <div class="stat-content">
+                            <h3>Total de Itens</h3>
+                            <p class="stat-value" id="totalItens">0</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-content">
+                            <h3>Valor Total do Estoque</h3>
+                            <p class="stat-value" id="valorTotal">R$ 0,00</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">⚠️</div>
+                        <div class="stat-content">
+                            <h3>Itens Críticos</h3>
+                            <p class="stat-value" id="itensCriticos">0</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">📋</div>
+                        <div class="stat-content">
+                            <h3>Total de Movimentações</h3>
+                            <p class="stat-value" id="totalMovimentacoes">0</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert-section">
+                    <h2>⚠️ Itens com Estoque Baixo</h2>
+                    <div id="alertasEstoque" class="alerts-container"></div>
+                </div>
+                
+                <div class="categories-section">
+                    <h2>📊 Distribuição por Categoria</h2>
+                    <div id="categoriasContainer" class="categories-grid"></div>
+                </div>
+            </div>
+
             <!-- Página: Estoque -->
             <div id="page-estoque" class="page active">
                 <div class="page-header">
@@ -104,6 +163,7 @@
                                 <option value="caixa">Caixa</option>
                                 <option value="dz">Dúzia</option>
                                 <option value="m">Metro</option>
+                                <option value="ml">ml</option>
                             </select>
                         </div>
                         
@@ -117,6 +177,7 @@
                                 <option value="Condimentos">Condimentos</option>
                                 <option value="Embalagens">Embalagens</option>
                                 <option value="Limpeza">Limpeza</option>
+                                
                             </select>
                         </div>
                         
@@ -176,6 +237,7 @@
                             <label for="motivo">Motivo da Retirada</label>
                             <select id="motivo">
                                 <option value="Uso na Cozinha">Uso na Cozinha</option>
+                                <option value = "Uso no Bar">Uso no Bar</option>
                                 <option value="Descarte">Descarte</option>
                                 <option value="Danos">Danos</option>
                                 <option value="Perda">Perda</option>
@@ -276,6 +338,56 @@
             </div>
         </main>
     </div>
+
+            <!-- Página: Relatório -->
+            <div id="page-relatorio" class="page">
+                <div class="page-header">
+                    <h1>📈 Relatório de Estoque</h1>
+                </div>
+                
+                <div class="report-container">
+                    <div class="report-section">
+                        <h2>Resumo Financeiro</h2>
+                        <div class="report-grid">
+                            <div class="report-item">
+                                <label>Valor Total:</label>
+                                <p id="reportValorTotal">R$ 0,00</p>
+                            </div>
+                            <div class="report-item">
+                                <label>Maior Valor Unitário:</label>
+                                <p id="reportMaiorPreco">R$ 0,00</p>
+                            </div>
+                            <div class="report-item">
+                                <label>Menor Valor Unitário:</label>
+                                <p id="reportMenorPreco">R$ 0,00</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="report-section">
+                        <h2>Resumo de Movimentações</h2>
+                        <div class="report-grid">
+                            <div class="report-item">
+                                <label>Adições:</label>
+                                <p id="reportAdicoes">0</p>
+                            </div>
+                            <div class="report-item">
+                                <label>Retiradas:</label>
+                                <p id="reportRetiradas">0</p>
+                            </div>
+                            <div class="report-item">
+                                <label>Reposições:</label>
+                                <p id="reportReposicoes">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="report-section">
+                        <h2>Top 5 Itens Mais Valosos</h2>
+                        <div id="topItensContainer" class="top-itens-list"></div>
+                    </div>
+                </div>
+            </div>
 
     <!-- Modal de Confirmação -->
     <div id="confirmModal" class="modal">

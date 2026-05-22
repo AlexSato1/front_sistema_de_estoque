@@ -22,7 +22,10 @@ document.addEventListener('DOMContentLoaded', function() {
     displayUserInfo();
     setupMenuPermissions();
     setupEventListeners();
-    loadPage('estoque');
+    loadPage('dashboard');
+    
+    // Marcar primeiro menu como ativo
+    document.querySelector('.menu-item[data-page="dashboard"]').classList.add('active');
 });
 
 // ==================== INICIALIZAÇÃO DE DADOS ====================
@@ -75,10 +78,18 @@ function setupMenuPermissions() {
         menuAdicionar.style.display = 'none';
     }
     
-    // Menu Reposição - apenas admin e user5 podem
+    // Menu Reposição - apenas admin pode
     const menuRepor = document.getElementById('menuRepor');
     if (!currentUser.permissions.includes('restock')) {
         menuRepor.style.display = 'none';
+    }
+    
+    // Menu Histórico e Relatório - apenas admin pode
+    const menuHistorico = document.querySelector('.menu-item[data-page="historico"]');
+    const menuRelatorio = document.querySelector('.menu-item[data-page="relatorio"]');
+    if (!canViewHistory()) {
+        if (menuHistorico) menuHistorico.style.display = 'none';
+        if (menuRelatorio) menuRelatorio.style.display = 'none';
     }
 }
 
@@ -92,6 +103,14 @@ function canRemove() {
 
 function canRestock() {
     return currentUser.permissions.includes('restock');
+}
+
+function canDelete() {
+    return currentUser.role === 'admin';
+}
+
+function canViewHistory() {
+    return currentUser.role === 'admin';
 }
 
 // ==================== NAVEGAÇÃO ====================
@@ -165,7 +184,9 @@ function loadPage(page) {
         selectedPage.classList.add('active');
         
         // Executar ações específicas da página
-        if (page === 'estoque') {
+        if (page === 'dashboard') {
+            displayDashboard();
+        } else if (page === 'estoque') {
             displayEstoque();
         } else if (page === 'retirar') {
             populateItemSelect('itemSelecionado');
@@ -173,6 +194,8 @@ function loadPage(page) {
             populateItemSelect('itemReposicao');
         } else if (page === 'historico') {
             displayHistorico();
+        } else if (page === 'relatorio') {
+            displayRelatorio();
         }
     }
 }
@@ -196,6 +219,14 @@ function displayEstoque() {
         const row = document.createElement('tr');
         const imgThumb = item.imagem ? `<img src="${item.imagem}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">` : '<span style="color: #999;">Sem imagem</span>';
         
+        let actions = '';
+        if (canAdd()) {
+            actions += `<button class="btn-small btn-edit" onclick="editarItem(${item.id})">✏️ Editar</button>`;
+        }
+        if (canDelete()) {
+            actions += `<button class="btn-small btn-delete" onclick="deleteItem(${item.id})">🗑️ Deletar</button>`;
+        }
+        
         row.innerHTML = `
             <td>${imgThumb}</td>
             <td>${item.nome}</td>
@@ -205,8 +236,7 @@ function displayEstoque() {
             <td>${item.fornecedor || 'N/A'}</td>
             <td>${item.dataCriacao}</td>
             <td>
-                <button class="btn-small btn-edit" onclick="editarItem(${item.id})">✏️ Editar</button>
-                <button class="btn-small btn-delete" onclick="deleteItem(${item.id})">🗑️ Deletar</button>
+                ${actions || '<span style="color: #999;">Sem ações</span>'}
             </td>
         `;
         tbody.appendChild(row);
@@ -308,6 +338,11 @@ function editarItem(itemId) {
 }
 
 function deleteItem(itemId) {
+    if (!canDelete()) {
+        showMessage('Você não tem permissão para deletar itens!', 'error', 'page-estoque');
+        return;
+    }
+    
     showModal(
         'Deletar Item',
         'Tem certeza que deseja deletar este item?',
@@ -496,6 +531,185 @@ function addToHistorico(tipo, itemNome, quantidade, unidade, detalhes) {
     }
     
     saveHistorico();
+}
+
+// ==================== DASHBOARD ====================
+
+function displayDashboard() {
+    // Calcular estatísticas
+    const totalItens = estoque.length;
+    const valorTotal = estoque.reduce((sum, item) => sum + (item.quantidade * item.preco), 0);
+    const itensCriticos = estoque.filter(item => item.quantidade <= 10).length;
+    const totalMovimentacoes = historico.length;
+    
+    // Função helper para formatar moeda
+    function formatarMoeda(valor) {
+        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
+    }
+    
+    // Atualizar cards
+    const totalItensEl = document.getElementById('totalItens');
+    const valorTotalEl = document.getElementById('valorTotal');
+    const itensCriticosEl = document.getElementById('itensCriticos');
+    const totalMovimentacoesEl = document.getElementById('totalMovimentacoes');
+    
+    if (totalItensEl) totalItensEl.textContent = totalItens;
+    if (valorTotalEl) valorTotalEl.textContent = formatarMoeda(valorTotal);
+    if (itensCriticosEl) itensCriticosEl.textContent = itensCriticos;
+    if (totalMovimentacoesEl) totalMovimentacoesEl.textContent = totalMovimentacoes;
+    
+    // Exibir alertas de estoque baixo
+    displayAlertas();
+    
+    // Exibir categorias
+    displayCategorias();
+}
+
+function displayAlertas() {
+    const container = document.getElementById('alertasEstoque');
+    const itensCriticos = estoque.filter(item => item.quantidade <= 10);
+    
+    container.innerHTML = '';
+    
+    if (itensCriticos.length === 0) {
+        container.innerHTML = '<div class="alerts-empty">✅ Nenhum item com estoque baixo!</div>';
+        return;
+    }
+    
+    itensCriticos.forEach(item => {
+        const criticidade = item.quantidade <= 5 ? 'critico' : '';
+        const alerta = document.createElement('div');
+        alerta.className = `alert-item ${criticidade}`;
+        alerta.innerHTML = `
+            <div class="alert-item-info">
+                <div class="alert-item-name">${item.nome}</div>
+                <div class="alert-item-details">
+                    Quantidade: ${item.quantidade} ${item.unidade} 
+                    ${item.quantidade <= 5 ? '⚠️ CRÍTICO' : ''}
+                </div>
+            </div>
+        `;
+        container.appendChild(alerta);
+    });
+}
+
+function displayCategorias() {
+    const container = document.getElementById('categoriasContainer');
+    const categorias = {};
+    
+    estoque.forEach(item => {
+        if (!categorias[item.categoria]) {
+            categorias[item.categoria] = 0;
+        }
+        categorias[item.categoria]++;
+    });
+    
+    container.innerHTML = '';
+    
+    Object.entries(categorias).forEach(([categoria, count]) => {
+        const card = document.createElement('div');
+        card.className = 'category-card';
+        card.innerHTML = `
+            <h4>${categoria}</h4>
+            <div class="category-count">${count}</div>
+            <small>${count === 1 ? 'item' : 'itens'}</small>
+        `;
+        container.appendChild(card);
+    });
+}
+
+// ==================== RELATÓRIO ====================
+
+function displayRelatorio() {
+    // Calcular valores
+    const valorTotal = estoque.reduce((sum, item) => sum + (item.quantidade * item.preco), 0);
+    
+    let maiorPreco = 0;
+    let menorPreco = Number.MAX_VALUE;
+    
+    estoque.forEach(item => {
+        if (item.preco > maiorPreco) maiorPreco = item.preco;
+        if (item.preco < menorPreco && item.preco > 0) menorPreco = item.preco;
+    });
+    
+    if (menorPreco === Number.MAX_VALUE) menorPreco = 0;
+    
+    // Contar movimentações por tipo
+    let adicoes = 0, retiradas = 0, reposicoes = 0;
+    historico.forEach(h => {
+        if (h.tipo === 'add') adicoes++;
+        else if (h.tipo === 'remove') retiradas++;
+        else if (h.tipo === 'restock') reposicoes++;
+    });
+    
+    // Função helper para formatar moeda
+    function formatarMoeda(valor) {
+        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
+    }
+    
+    // Atualizar relatório financeiro
+    const reportValorTotal = document.getElementById('reportValorTotal');
+    const reportMaiorPreco = document.getElementById('reportMaiorPreco');
+    const reportMenorPreco = document.getElementById('reportMenorPreco');
+    const reportAdicoes = document.getElementById('reportAdicoes');
+    const reportRetiradas = document.getElementById('reportRetiradas');
+    const reportReposicoes = document.getElementById('reportReposicoes');
+    
+    if (reportValorTotal) reportValorTotal.textContent = formatarMoeda(valorTotal);
+    if (reportMaiorPreco) reportMaiorPreco.textContent = formatarMoeda(maiorPreco);
+    if (reportMenorPreco) reportMenorPreco.textContent = formatarMoeda(menorPreco);
+    
+    // Atualizar resumo de movimentações
+    if (reportAdicoes) reportAdicoes.textContent = adicoes;
+    if (reportRetiradas) reportRetiradas.textContent = retiradas;
+    if (reportReposicoes) reportReposicoes.textContent = reposicoes;
+    
+    // Exibir top 5 itens mais valosos
+    displayTopItens();
+}
+
+function displayTopItens() {
+    const container = document.getElementById('topItensContainer');
+    
+    if (!container) return;
+    
+    // Calcular valor total de cada item
+    const itensComValor = estoque.map(item => ({
+        ...item,
+        valorTotal: item.quantidade * item.preco
+    }));
+    
+    // Ordenar por valor total decrescente
+    itensComValor.sort((a, b) => b.valorTotal - a.valorTotal);
+    
+    // Pegar top 5
+    const top5 = itensComValor.slice(0, 5);
+    
+    container.innerHTML = '';
+    
+    // Função helper para formatar moeda
+    function formatarMoeda(valor) {
+        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
+    }
+    
+    if (top5.length === 0) {
+        container.innerHTML = '<div class="alerts-empty">Nenhum item no estoque</div>';
+        return;
+    }
+    
+    top5.forEach((item, index) => {
+        const topItem = document.createElement('div');
+        topItem.className = 'top-item';
+        topItem.innerHTML = `
+            <div class="top-item-rank">${index + 1}º</div>
+            <div class="top-item-info">
+                <div class="top-item-name">${item.nome}</div>
+                <div class="top-item-value">Qty: ${item.quantidade} ${item.unidade} × ${formatarMoeda(item.preco)}</div>
+            </div>
+            <div class="top-item-amount">${formatarMoeda(item.valorTotal)}</div>
+        `;
+        container.appendChild(topItem);
+    });
 }
 
 function displayHistorico() {
