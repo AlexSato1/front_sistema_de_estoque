@@ -40,11 +40,11 @@ function initializeData() {
     } else {
         // Dados iniciais de exemplo
         estoque = [
-            { id: 1, nome: 'Pão Francês', quantidade: 50, unidade: 'kg', categoria: 'Pao', preco: 8.50, fornecedor: 'Padaria XYZ', imagem: null, dataCriacao: new Date().toLocaleDateString() },
-            { id: 2, nome: 'Carne Moída', quantidade: 30, unidade: 'kg', categoria: 'Alimentos', preco: 25.00, fornecedor: 'Açougue ABC', imagem: null, dataCriacao: new Date().toLocaleDateString() },
-            { id: 3, nome: 'Refrigerante', quantidade: 40, unidade: 'l', categoria: 'Bebidas', preco: 4.50, fornecedor: 'Distribuidora Del', imagem: null, dataCriacao: new Date().toLocaleDateString() },
-            { id: 4, nome: 'Tomate', quantidade: 20, unidade: 'kg', categoria: 'Alimentos', preco: 5.00, fornecedor: 'Hortifrutti', imagem: null, dataCriacao: new Date().toLocaleDateString() },
-            { id: 5, nome: 'Queijo Meia Cura', quantidade: 15, unidade: 'kg', categoria: 'Alimentos', preco: 35.00, fornecedor: 'Queijaria Premium', imagem: null, dataCriacao: new Date().toLocaleDateString() }
+            { id: 1, codigo: 'PFR-001', nome: 'Pão Francês', quantidade: 50, unidade: 'kg', categoria: 'Pao', preco: 8.50, fornecedor: 'Padaria XYZ', imagem: null, dataCriacao: new Date().toLocaleDateString() },
+            { id: 2, codigo: 'CRM-002', nome: 'Carne Moída', quantidade: 30, unidade: 'kg', categoria: 'Alimentos', preco: 25.00, fornecedor: 'Açougue ABC', imagem: null, dataCriacao: new Date().toLocaleDateString() },
+            { id: 3, codigo: 'RFR-003', nome: 'Refrigerante', quantidade: 40, unidade: 'l', categoria: 'Bebidas', preco: 4.50, fornecedor: 'Distribuidora Del', imagem: null, dataCriacao: new Date().toLocaleDateString() },
+            { id: 4, codigo: 'TMT-004', nome: 'Tomate', quantidade: 20, unidade: 'kg', categoria: 'Alimentos', preco: 5.00, fornecedor: 'Hortifrutti', imagem: null, dataCriacao: new Date().toLocaleDateString() },
+            { id: 5, codigo: 'QJC-005', nome: 'Queijo Meia Cura', quantidade: 15, unidade: 'kg', categoria: 'Alimentos', preco: 35.00, fornecedor: 'Queijaria Premium', imagem: null, dataCriacao: new Date().toLocaleDateString() }
         ];
         saveEstoque();
     }
@@ -84,12 +84,10 @@ function setupMenuPermissions() {
         menuRepor.style.display = 'none';
     }
     
-    // Menu Histórico e Relatório - apenas admin pode
+    // Menu Histórico - apenas admin pode
     const menuHistorico = document.querySelector('.menu-item[data-page="historico"]');
-    const menuRelatorio = document.querySelector('.menu-item[data-page="relatorio"]');
     if (!canViewHistory()) {
         if (menuHistorico) menuHistorico.style.display = 'none';
-        if (menuRelatorio) menuRelatorio.style.display = 'none';
     }
 }
 
@@ -194,8 +192,6 @@ function loadPage(page) {
             populateItemSelect('itemReposicao');
         } else if (page === 'historico') {
             displayHistorico();
-        } else if (page === 'relatorio') {
-            displayRelatorio();
         }
     }
 }
@@ -203,34 +199,45 @@ function loadPage(page) {
 // ==================== ESTOQUE ====================
 
 function displayEstoque() {
-    const tbody = document.getElementById('estoqueTableBody');
-    const emptyMsg = document.getElementById('emptyMessage');
-    
-    tbody.innerHTML = '';
-    
-    if (estoque.length === 0) {
-        emptyMsg.style.display = 'block';
-        return;
+    const tbodyBebidas = document.getElementById('estoqueTableBodyBebidas');
+    const tbodyComidas = document.getElementById('estoqueTableBodyComidas');
+    const emptyBebidas = document.getElementById('emptyBebidas');
+    const emptyComidas = document.getElementById('emptyComidas');
+
+    tbodyBebidas.innerHTML = '';
+    tbodyComidas.innerHTML = '';
+
+    const bebidaCats = ['bebidas', 'bebida'];
+    const comidaCats = ['pao', 'massa', 'alimentos', 'pão', 'pao/massa'];
+
+    function isBebida(cat) {
+        if (!cat) return false;
+        return bebidaCats.includes(String(cat).toLowerCase());
     }
-    
-    emptyMsg.style.display = 'none';
-    
-    estoque.forEach(item => {
+
+    function isComida(cat) {
+        if (!cat) return false;
+        const c = String(cat).toLowerCase();
+        return comidaCats.includes(c) || (!isBebida(c));
+    }
+
+    const bebidas = estoque.filter(i => isBebida(i.categoria));
+    const comidas = estoque.filter(i => isComida(i.categoria));
+
+    function makeRow(item) {
         const row = document.createElement('tr');
         const imgThumb = item.imagem ? `<img src="${item.imagem}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">` : '<span style="color: #999;">Sem imagem</span>';
-        
         let actions = '';
-        if (canAdd()) {
-            actions += `<button class="btn-small btn-edit" onclick="editarItem(${item.id})">✏️ Editar</button>`;
-        }
-        if (canDelete()) {
-            actions += `<button class="btn-small btn-delete" onclick="deleteItem(${item.id})">🗑️ Deletar</button>`;
-        }
-        
+        if (canAdd()) actions += `<button class="btn-small btn-edit" onclick="editarItem(${item.id})">✏️ Editar</button>`;
+        if (canDelete()) actions += `<button class="btn-small btn-delete" onclick="deleteItem(${item.id})">🗑️ Deletar</button>`;
+        const precoFormatado = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.preco || 0);
+
         row.innerHTML = `
             <td>${imgThumb}</td>
+            <td>${item.codigo || ''}</td>
             <td>${item.nome}</td>
             <td><strong>${item.quantidade}</strong></td>
+            <td>${precoFormatado}</td>
             <td>${item.unidade}</td>
             <td>${item.categoria}</td>
             <td>${item.fornecedor || 'N/A'}</td>
@@ -239,21 +246,31 @@ function displayEstoque() {
                 ${actions || '<span style="color: #999;">Sem ações</span>'}
             </td>
         `;
-        tbody.appendChild(row);
-    });
+        return row;
+    }
+
+    if (bebidas.length === 0) {
+        emptyBebidas.style.display = 'block';
+    } else {
+        emptyBebidas.style.display = 'none';
+        bebidas.forEach(item => tbodyBebidas.appendChild(makeRow(item)));
+    }
+
+    if (comidas.length === 0) {
+        emptyComidas.style.display = 'block';
+    } else {
+        emptyComidas.style.display = 'none';
+        comidas.forEach(item => tbodyComidas.appendChild(makeRow(item)));
+    }
 }
 
 function filterEstoque() {
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    const tbody = document.getElementById('estoqueTableBody');
-    
-    document.querySelectorAll('#estoqueTableBody tr').forEach(row => {
-        const itemName = row.cells[0].textContent.toLowerCase();
-        if (itemName.includes(searchTerm)) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
+    const rows = document.querySelectorAll('#estoqueTableBodyBebidas tr, #estoqueTableBodyComidas tr');
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        if (text.includes(searchTerm)) row.style.display = '';
+        else row.style.display = 'none';
     });
 }
 
@@ -264,7 +281,7 @@ function populateItemSelect(selectId) {
     estoque.forEach(item => {
         const option = document.createElement('option');
         option.value = item.id;
-        option.textContent = `${item.nome} (${item.quantidade} ${item.unidade})`;
+        option.textContent = `${item.nome} (${item.quantidade} ${item.unidade}) ${item.codigo ? '- ' + item.codigo : ''}`;
         select.appendChild(option);
     });
 }
@@ -308,6 +325,7 @@ function editarItem(itemId) {
     const item = estoque.find(i => i.id == itemId);
     if (item) {
         // Preencher formulário
+        document.getElementById('itemCodigo').value = item.codigo || '';
         document.getElementById('itemNome').value = item.nome;
         document.getElementById('itemQuantidade').value = item.quantidade;
         document.getElementById('itemUnidade').value = item.unidade;
@@ -367,6 +385,7 @@ function handleAdicionarItem(e) {
     }
     
     const nome = document.getElementById('itemNome').value;
+    const codigo = document.getElementById('itemCodigo').value.trim();
     const quantidade = parseInt(document.getElementById('itemQuantidade').value);
     const unidade = document.getElementById('itemUnidade').value;
     const categoria = document.getElementById('itemCategoria').value;
@@ -381,6 +400,7 @@ function handleAdicionarItem(e) {
         const item = estoque.find(i => i.id == editId);
         if (item) {
             const quantidadeAnterior = item.quantidade;
+            item.codigo = codigo || item.codigo;
             item.nome = nome;
             item.quantidade = quantidade;
             item.unidade = unidade;
@@ -402,6 +422,7 @@ function handleAdicionarItem(e) {
         const id = Math.max(...estoque.map(i => i.id), 0) + 1;
         estoque.push({
             id,
+            codigo,
             nome,
             quantidade,
             unidade,
@@ -615,100 +636,6 @@ function displayCategorias() {
             <small>${count === 1 ? 'item' : 'itens'}</small>
         `;
         container.appendChild(card);
-    });
-}
-
-// ==================== RELATÓRIO ====================
-
-function displayRelatorio() {
-    // Calcular valores
-    const valorTotal = estoque.reduce((sum, item) => sum + (item.quantidade * item.preco), 0);
-    
-    let maiorPreco = 0;
-    let menorPreco = Number.MAX_VALUE;
-    
-    estoque.forEach(item => {
-        if (item.preco > maiorPreco) maiorPreco = item.preco;
-        if (item.preco < menorPreco && item.preco > 0) menorPreco = item.preco;
-    });
-    
-    if (menorPreco === Number.MAX_VALUE) menorPreco = 0;
-    
-    // Contar movimentações por tipo
-    let adicoes = 0, retiradas = 0, reposicoes = 0;
-    historico.forEach(h => {
-        if (h.tipo === 'add') adicoes++;
-        else if (h.tipo === 'remove') retiradas++;
-        else if (h.tipo === 'restock') reposicoes++;
-    });
-    
-    // Função helper para formatar moeda
-    function formatarMoeda(valor) {
-        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
-    }
-    
-    // Atualizar relatório financeiro
-    const reportValorTotal = document.getElementById('reportValorTotal');
-    const reportMaiorPreco = document.getElementById('reportMaiorPreco');
-    const reportMenorPreco = document.getElementById('reportMenorPreco');
-    const reportAdicoes = document.getElementById('reportAdicoes');
-    const reportRetiradas = document.getElementById('reportRetiradas');
-    const reportReposicoes = document.getElementById('reportReposicoes');
-    
-    if (reportValorTotal) reportValorTotal.textContent = formatarMoeda(valorTotal);
-    if (reportMaiorPreco) reportMaiorPreco.textContent = formatarMoeda(maiorPreco);
-    if (reportMenorPreco) reportMenorPreco.textContent = formatarMoeda(menorPreco);
-    
-    // Atualizar resumo de movimentações
-    if (reportAdicoes) reportAdicoes.textContent = adicoes;
-    if (reportRetiradas) reportRetiradas.textContent = retiradas;
-    if (reportReposicoes) reportReposicoes.textContent = reposicoes;
-    
-    // Exibir top 5 itens mais valosos
-    displayTopItens();
-}
-
-function displayTopItens() {
-    const container = document.getElementById('topItensContainer');
-    
-    if (!container) return;
-    
-    // Calcular valor total de cada item
-    const itensComValor = estoque.map(item => ({
-        ...item,
-        valorTotal: item.quantidade * item.preco
-    }));
-    
-    // Ordenar por valor total decrescente
-    itensComValor.sort((a, b) => b.valorTotal - a.valorTotal);
-    
-    // Pegar top 5
-    const top5 = itensComValor.slice(0, 5);
-    
-    container.innerHTML = '';
-    
-    // Função helper para formatar moeda
-    function formatarMoeda(valor) {
-        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
-    }
-    
-    if (top5.length === 0) {
-        container.innerHTML = '<div class="alerts-empty">Nenhum item no estoque</div>';
-        return;
-    }
-    
-    top5.forEach((item, index) => {
-        const topItem = document.createElement('div');
-        topItem.className = 'top-item';
-        topItem.innerHTML = `
-            <div class="top-item-rank">${index + 1}º</div>
-            <div class="top-item-info">
-                <div class="top-item-name">${item.nome}</div>
-                <div class="top-item-value">Qty: ${item.quantidade} ${item.unidade} × ${formatarMoeda(item.preco)}</div>
-            </div>
-            <div class="top-item-amount">${formatarMoeda(item.valorTotal)}</div>
-        `;
-        container.appendChild(topItem);
     });
 }
 

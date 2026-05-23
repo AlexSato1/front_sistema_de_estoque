@@ -7,13 +7,6 @@
     <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-    <div style="position:fixed;top:10px;right:10px;z-index:2000;">
-        <label for="themeSelector" style="display:none">Tema</label>
-        <select id="themeSelector" aria-label="Selecionar tema">
-            <option value="dark">Escuro</option>
-            <option value="none">Sem tema</option>
-        </select>
-    </div>
 
     <div class="dashboard-container">
         <!-- Sidebar -->
@@ -25,6 +18,7 @@
             </div>
             
             <nav class="sidebar-menu">
+                <span class="menu-section-title">Visão geral</span>
                 <a href="#" class="menu-item active" data-page="dashboard">
                     <span class="icon">📊</span>
                     <span>Dashboard</span>
@@ -33,6 +27,12 @@
                     <span class="icon">📦</span>
                     <span>Estoque</span>
                 </a>
+                <a href="#" class="menu-item" data-page="historico">
+                    <span class="icon">📋</span>
+                    <span>Histórico</span>
+                </a>
+
+                <span class="menu-section-title">Operações</span>
                 <a href="#" class="menu-item" data-page="adicionar" id="menuAdicionar">
                     <span class="icon">➕</span>
                     <span>Adicionar Item</span>
@@ -44,14 +44,6 @@
                 <a href="#" class="menu-item" data-page="repor" id="menuRepor">
                     <span class="icon">🔄</span>
                     <span>Reposição</span>
-                </a>
-                <a href="#" class="menu-item" data-page="relatorio">
-                    <span class="icon">📈</span>
-                    <span>Relatório</span>
-                </a>
-                <a href="#" class="menu-item" data-page="historico">
-                    <span class="icon">📋</span>
-                    <span>Histórico</span>
                 </a>
             </nav>
             
@@ -122,25 +114,51 @@
                     </div>
                 </div>
                 
-                <div class="table-container">
-                    <table id="estoqueTable" class="table">
-                        <thead>
-                            <tr>
-                                <th>Imagem</th>
-                                <th>Item</th>
-                                <th>Quantidade</th>
-                                <th>Unidade</th>
-                                <th>Categoria</th>
-                                <th>Fornecedor</th>
-                                <th>Último Atualizado</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="estoqueTableBody">
-                        </tbody>
-                    </table>
+                <div class="tables-wrapper" style="display:flex;gap:20px;flex-wrap:wrap;">
+                    <div class="table-container" style="flex:1;min-width:300px;">
+                        <h3>Bebidas</h3>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Imagem</th>
+                                    <th>Código</th>
+                                    <th>Item</th>
+                                    <th>Quantidade</th>
+                                    <th>Preço</th>
+                                    <th>Unidade</th>
+                                    <th>Categoria</th>
+                                    <th>Fornecedor</th>
+                                    <th>Último Atualizado</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="estoqueTableBodyBebidas"></tbody>
+                        </table>
+                        <div id="emptyBebidas" class="empty-message" style="display:none">Nenhum item nas Bebidas.</div>
+                    </div>
+
+                    <div class="table-container" style="flex:1;min-width:300px;">
+                        <h3>Comidas</h3>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Imagem</th>
+                                    <th>Código</th>
+                                    <th>Item</th>
+                                    <th>Quantidade</th>
+                                    <th>Preço</th>
+                                    <th>Unidade</th>
+                                    <th>Categoria</th>
+                                    <th>Fornecedor</th>
+                                    <th>Último Atualizado</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="estoqueTableBodyComidas"></tbody>
+                        </table>
+                        <div id="emptyComidas" class="empty-message" style="display:none">Nenhum item nas Comidas.</div>
+                    </div>
                 </div>
-                <div id="emptyMessage" class="empty-message">Nenhum item no estoque. Comece adicionando um item!</div>
             </div>
 
             <!-- Página: Adicionar Item -->
@@ -151,6 +169,10 @@
                 
                 <div class="form-container">
                     <form id="formAdicionar" class="form-estoque">
+                        <div class="form-group">
+                            <label for="itemCodigo">Código do Produto</label>
+                            <input type="text" id="itemCodigo" placeholder="Ex: SKU-12345">
+                        </div>
                         <div class="form-group">
                             <label for="itemNome">Nome do Item *</label>
                             <input type="text" id="itemNome" required>
@@ -347,56 +369,6 @@
         </main>
     </div>
 
-            <!-- Página: Relatório -->
-            <div id="page-relatorio" class="page">
-                <div class="page-header">
-                    <h1>📈 Relatório de Estoque</h1>
-                </div>
-                
-                <div class="report-container">
-                    <div class="report-section">
-                        <h2>Resumo Financeiro</h2>
-                        <div class="report-grid">
-                            <div class="report-item">
-                                <label>Valor Total:</label>
-                                <p id="reportValorTotal">R$ 0,00</p>
-                            </div>
-                            <div class="report-item">
-                                <label>Maior Valor Unitário:</label>
-                                <p id="reportMaiorPreco">R$ 0,00</p>
-                            </div>
-                            <div class="report-item">
-                                <label>Menor Valor Unitário:</label>
-                                <p id="reportMenorPreco">R$ 0,00</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="report-section">
-                        <h2>Resumo de Movimentações</h2>
-                        <div class="report-grid">
-                            <div class="report-item">
-                                <label>Adições:</label>
-                                <p id="reportAdicoes">0</p>
-                            </div>
-                            <div class="report-item">
-                                <label>Retiradas:</label>
-                                <p id="reportRetiradas">0</p>
-                            </div>
-                            <div class="report-item">
-                                <label>Reposições:</label>
-                                <p id="reportReposicoes">0</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="report-section">
-                        <h2>Top 5 Itens Mais Valosos</h2>
-                        <div id="topItensContainer" class="top-itens-list"></div>
-                    </div>
-                </div>
-            </div>
-
     <!-- Modal de Confirmação -->
     <div id="confirmModal" class="modal">
         <div class="modal-content">
@@ -409,7 +381,6 @@
         </div>
     </div>
 
-    <script src="./theme.js"></script>
     <script src="./dashboard.js"></script>
 </body>
 </html>
