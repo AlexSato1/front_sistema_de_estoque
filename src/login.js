@@ -22,7 +22,7 @@ const users = {
         permissions: ['remove']
     },
     chefebar: {
-        password: '432421435211',
+        password: '12345678',
         name: 'Pedro Costa',
         role: 'limited',
         cargo: 'Bebidas',

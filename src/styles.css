@@ -18,13 +18,38 @@
     --border-radius: 8px;
     --transition: 0.3s ease;
     --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    /* Theme-aware variables (fallbacks provided) */
+    --bg-color: #f5f5f5;
+    --panel-bg: #ffffff;
+    --text-color: #222222;
+    --muted-color: #666666;
 }
+
+/* Light theme */
+[data-theme="light"] {
+    --bg-color: #f5f5f5;
+    --panel-bg: #ffffff;
+    --text-color: #222222;
+    --muted-color: #666666;
+}
+
+/* Dark theme */
+[data-theme="dark"] {
+    --bg-color: #0f1720;
+    --panel-bg: #0b1220;
+    --text-color: #e6eef8;
+    --muted-color: #aab6c6;
+    --primary-color: #2563eb;
+    --secondary-color: #3b82f6;
+}
+
+/* 'none' theme will simply not set data-theme; fallbacks in :root apply */
 
 html, body {
     height: 100%;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f5f5f5;
-    color: var(--dark-color);
+    background-color: var(--bg-color, #f5f5f5);
+    color: var(--text-color, var(--dark-color));
 }
 
 /* ==================== LOGIN PAGE ====================*/

@@ -7,6 +7,14 @@
     <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
+    <div style="position:fixed;top:10px;right:10px;z-index:2000;">
+        <label for="themeSelector" style="display:none">Tema</label>
+        <select id="themeSelector" aria-label="Selecionar tema">
+            <option value="dark">Escuro</option>
+            <option value="none">Sem tema</option>
+        </select>
+    </div>
+
     <div class="dashboard-container">
         <!-- Sidebar -->
         <aside class="sidebar">
@@ -401,6 +409,7 @@
         </div>
     </div>
 
+    <script src="./theme.js"></script>
     <script src="./dashboard.js"></script>
 </body>
 </html>

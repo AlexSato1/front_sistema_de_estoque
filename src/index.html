@@ -7,6 +7,14 @@
     <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
+    <div style="position:fixed;top:10px;right:10px;z-index:2000;">
+        <label for="themeSelector" style="display:none">Tema</label>
+        <select id="themeSelector" aria-label="Selecionar tema">
+            <option value="dark">Escuro</option>
+            <option value="none">Sem tema</option>
+        </select>
+    </div>
+
     <div id="loginContainer" class="login-container">
         <div class="login-box">
             <h1>🍔 Sistema de Estoque</h1>
@@ -30,7 +38,7 @@
                     <p>👑 <strong>Admin:</strong> user: admin | senha: 932544231321</p>
                     <p>👤 <strong>Garçom:</strong> user: garcom | senha: 4324213</p>
                     <p>👤 <strong>Cozinha:</strong> user: cozinha | senha: 32132142</p>
-                    <p>👤 <strong>Bebidas:</strong> user: chefebar | senha: 432421435211</p>
+                    <p>👤 <strong>Bebidas:</strong> user: chefebar | senha: 12345678</p>
                     <p>👤 <strong>Operador:</strong> user: operator | senha: 213213121</p>
                 </div>
             </form>
@@ -39,6 +47,7 @@
         </div>
     </div>
 
+    <script src="./theme.js"></script>
     <script src="./login.js"></script>
 </body>
 </html>
