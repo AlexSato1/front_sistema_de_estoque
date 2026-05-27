@@ -239,6 +239,7 @@ function displayEstoque() {
             <td><strong>${item.quantidade}</strong></td>
             <td>${precoFormatado}</td>
             <td>${item.unidade}</td>
+            
             <td>${item.categoria}</td>
             <td>${item.fornecedor || 'N/A'}</td>
             <td>${item.dataCriacao}</td>

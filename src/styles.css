@@ -7,13 +7,13 @@
 }
 
 :root {
-    --primary-color: #2196F3;
-    --secondary-color: #64B5F6;
+    --primary-color: #0563af;
+    --secondary-color: #056ec4;
     --success-color: #4CAF50;
     --danger-color: #E74C3C;
     --warning-color: #F39C12;
-    --info-color: #2196F3;
-    --dark-color: #1565C0;
+    --info-color: #0366b8;
+    --dark-color: #0553ac;
     --light-color: #E3F2FD;
     --border-radius: 8px;
     --transition: 0.3s ease;
@@ -63,7 +63,7 @@ html, body {
     font-size: 32px;
     margin-bottom: 10px;
     text-align: center;
-    color: #2196F3;
+    color: #056ec4;
 }
 
 .login-box h2 {
@@ -175,7 +175,7 @@ html, body {
 
 .sidebar {
     width: 280px;
-    background: linear-gradient(180deg, #1565C0 0%, #1e88e5 100%);
+    background: linear-gradient(180deg, #1565C0 0%, #0156a0 100%);
     color: white;
     display: flex;
     flex-direction: column;
@@ -532,7 +532,7 @@ html, body {
 }
 
 .btn-edit:hover {
-    background-color: #2980b9;
+    background-color: #015f9e;
 }
 
 .btn-delete {
