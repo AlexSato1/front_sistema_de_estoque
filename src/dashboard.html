@@ -8,9 +8,12 @@
 </head>
 <body>
 
+    <!-- Mobile Menu Toggle -->
+    <button class="menu-toggle" id="menuToggle" title="Menu">☰</button>
+
     <div class="dashboard-container">
         <!-- Sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <h2>🍔 Estoque</h2>
                 <p class="user-info" id="userInfo"></p>
@@ -30,6 +33,10 @@
                 <a href="#" class="menu-item" data-page="historico">
                     <span class="icon">📋</span>
                     <span>Histórico</span>
+                </a>
+                <a href="#" class="menu-item" data-page="usuarios" id="menuUsuarios">
+                    <span class="icon">👥</span>
+                    <span>Usuários</span>
                 </a>
 
                 <span class="menu-section-title">Operações</span>
@@ -128,6 +135,8 @@
                                     <th>Unidade</th>
                                     <th>Categoria</th>
                                     <th>Fornecedor</th>
+                                    <th>Data de Produção</th>
+                                    <th>Data de Validade</th>
                                     <th>Último Atualizado</th>
                                     <th>Ações</th>
                                 </tr>
@@ -150,6 +159,8 @@
                                     <th>Unidade</th>
                                     <th>Categoria</th>
                                     <th>Fornecedor</th>
+                                    <th>Data de Produção</th>
+                                    <th>Data de Validade</th>
                                     <th>Último Atualizado</th>
                                     <th>Ações</th>
                                 </tr>
@@ -219,6 +230,16 @@
                         <div class="form-group">
                             <label for="itemFornecedor">Fornecedor</label>
                             <input type="text" id="itemFornecedor" placeholder="Ex: Distribuidora ABC">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="itemDataProducao">Data de Produção</label>
+                            <input type="date" id="itemDataProducao">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="itemDataValidade">Data de Validade</label>
+                            <input type="date" id="itemDataValidade">
                         </div>
                         
                         <div class="form-group">
@@ -365,6 +386,72 @@
                     </table>
                 </div>
                 <div id="emptyHistorico" class="empty-message">Nenhuma movimentação registrada.</div>
+            </div>
+            
+            <!-- Página: Usuários -->
+            <div id="page-usuarios" class="page">
+                <div class="page-header">
+                    <h1>👥 Gerenciamento de Usuários</h1>
+                    <button class="btn-primary" onclick="abrirFormularioCadastroUsuario()">➕ Novo Usuário</button>
+                </div>
+                
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Usuário</th>
+                                <th>Nome</th>
+                                <th>Email</th>
+                                <th>Cargo</th>
+                                <th>Permissões</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usuariosTableBody">
+                        </tbody>
+                    </table>
+                </div>
+                <div id="emptyUsuarios" class="empty-message">Nenhum usuário registrado.</div>
+                
+                <!-- Formulário de Cadastro/Edição de Usuário -->
+                <div id="usuarioFormContainer" class="form-container" style="display:none; margin-top: 30px; border: 1px solid #ddd; padding: 20px; border-radius: 8px;">
+                    <h2 id="usuarioFormTitle">Novo Usuário</h2>
+                    <form id="formUsuario" class="form-estoque">
+                        <div class="form-group">
+                            <label for="usuarioUsername">Usuário *</label>
+                            <input type="text" id="usuarioUsername" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="usuarioNome">Nome Completo *</label>
+                            <input type="text" id="usuarioNome" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="usuarioSenha">Senha *</label>
+                            <input type="password" id="usuarioSenha" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="usuarioEmail">Email Pessoal *</label>
+                            <input type="email" id="usuarioEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="usuarioCargo">Cargo *</label>
+                            <select id="usuarioCargo" required>
+                                <option value="">Selecione...</option>
+                                <option value="Garçom">Garçom</option>
+                                <option value="Cozinha">Cozinha</option>
+                                <option value="Bebidas">Bebidas</option>
+                                <option value="Operador">Operador</option>
+                                <option value="Estoque">Estoque</option>
+                                <option value="Administração">Administração</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button type="submit" class="btn-primary">Salvar</button>
+                            <button type="button" class="btn-secondary" onclick="fecharFormularioUsuario()">Cancelar</button>
+                        </div>
+                        <div id="msgUsuario" class="message"></div>
+                    </form>
+                </div>
             </div>
         </main>
     </div>

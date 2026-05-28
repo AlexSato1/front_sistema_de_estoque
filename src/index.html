@@ -13,7 +13,8 @@
             <h1>🍔 Sistema de Estoque</h1>
             <h2>Lanchonete Control</h2>
             
-            <form id="loginForm" class="login-form">
+            <!-- Formulário de Login -->
+            <form id="loginForm" class="login-form" style="display: block;">
                 <div class="form-group">
                     <label for="username">Usuário:</label>
                     <input type="text" id="username" name="username" required>
@@ -25,21 +26,110 @@
                 </div>
                 
                 <button type="submit" class="btn-login">Entrar</button>
+                <p style="text-align: center; margin-top: 15px; font-size: 14px;">
+                    Não tem conta? <button type="button" class="link-btn" onclick="toggleForms('register')">Cadastre-se aqui</button>
+                    <br>
+                    <button type="button" class="link-btn" onclick="toggleForms('recovery')">Esqueci a senha</button>
+                </p>
                 
                 <div class="demo-users">
                     <p><strong>Usuários de Demonstração:</strong></p>
-                    <p>👑 <strong>Admin:</strong> user: admin | senha: 932544231321</p>
-                    <p>👤 <strong>Garçom:</strong> user: garcom | senha: 4324213</p>
-                    <p>👤 <strong>Cozinha:</strong> user: cozinha | senha: 32132142</p>
-                    <p>👤 <strong>Bebidas:</strong> user: chefebar | senha: 12345678</p>
-                    <p>👤 <strong>Operador:</strong> user: operator | senha: 213213121</p>
+                    <p>👑 <strong>Admin:</strong> user: admin | senha: 03@09030201Ok</p>
+                    <p>👤 <strong>Garçom:</strong> user: garcom | senha: 69#432382Af</p>
+                    <p>👤 <strong>Cozinha:</strong> user: cozinha | senha: 349$43242Er</p>
+                    <p>👤 <strong>Bebidas:</strong> user: chefebar | senha: 845&432Hg</p>
+                    <p>👤 <strong>Operador:</strong> user: operator | senha: 43243Ym!</p>
                 </div>
+            </form>
+            
+            <!-- Formulário de Cadastro -->
+            <form id="registerForm" class="login-form" style="display: none;">
+                <div class="form-group">
+                    <label for="regName">Nome Completo:</label>
+                    <input type="text" id="regName" name="regName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="regUsername">Usuário:</label>
+                    <input type="text" id="regUsername" name="regUsername" required placeholder="Mínimo 4 caracteres">
+                </div>
+                
+                <div class="form-group">
+                    <label for="regPassword">Senha:</label>
+                    <input type="password" id="regPassword" name="regPassword" required placeholder="Mínimo 6 caracteres">
+                </div>
+                
+                <div class="form-group">
+                    <label for="regEmail">Email:</label>
+                    <input type="email" id="regEmail" name="regEmail" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="regCargo">Cargo:</label>
+                    <select id="regCargo" name="regCargo" required>
+                        <option value="">Selecione um cargo...</option>
+                        <option value="Garçom">Garçom</option>
+                        <option value="Cozinha">Cozinha</option>
+                        <option value="Bebidas">Bebidas</option>
+                        <option value="Operador">Operador</option>
+                        <option value="Estoque">Estoque</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn-login">Cadastrar</button>
+                <p style="text-align: center; margin-top: 15px; font-size: 14px;">
+                    Já tem conta? <button type="button" class="link-btn" onclick="toggleForms('login')">Faça login aqui</button>
+                </p>
+            </form>
+            
+            <!-- Formulário de Recuperação de Senha -->
+            <form id="recoveryForm" class="login-form" style="display: none;">
+                <div class="form-group">
+                    <label for="recoveryUsername">Usuário:</label>
+                    <input type="text" id="recoveryUsername" name="recoveryUsername" required placeholder="Digite seu usuário">
+                </div>
+                
+                <div class="form-group">
+                    <label for="recoveryEmail">Email Registrado:</label>
+                    <input type="email" id="recoveryEmail" name="recoveryEmail" required placeholder="Digite o email da sua conta">
+                </div>
+                
+                <button type="submit" class="btn-login">Enviar Código de Verificação</button>
+                <p style="text-align: center; margin-top: 15px; font-size: 14px;">
+                    Voltar ao <button type="button" class="link-btn" onclick="toggleForms('login')">Login</button>
+                </p>
+            </form>
+            
+            <!-- Formulário de Nova Senha -->
+            <form id="resetForm" class="login-form" style="display: none;">
+                <h3>✉️ Código Enviado por Email</h3>
+                <p style="font-size: 14px; color: #666; margin-bottom: 20px; text-align: center;">
+                    Um código de verificação foi enviado para seu email.<br>
+                    Defina uma nova senha abaixo.
+                </p>
+                <div class="form-group">
+                    <label for="newPassword">Nova Senha:</label>
+                    <input type="password" id="newPassword" name="newPassword" required placeholder="Mínimo 6 caracteres">
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirmPassword">Confirmar Senha:</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="Repita a senha">
+                </div>
+                
+                <button type="submit" class="btn-login">Redefinir Senha</button>
             </form>
             
             <div id="loginError" class="error-message"></div>
         </div>
     </div>
 
+    <!-- EmailJS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script>
+        // Inicializar EmailJS (ID público da conta)
+        emailjs.init('YOUR_PUBLIC_KEY'); // Será preenchido com a chave pública
+    </script>
     <script src="./login.js"></script>
 </body>
 </html>
