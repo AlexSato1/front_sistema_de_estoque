@@ -3,6 +3,7 @@
 let currentUser = null;
 let estoque = [];
 let historico = [];
+let pageSwitchTimeout = null;
 
 // ==================== INICIALIZAÇÃO ====================
 
@@ -60,6 +61,35 @@ function saveEstoque() {
 
 function saveHistorico() {
     localStorage.setItem('historico', JSON.stringify(historico));
+}
+
+// ==================== VALIDAÇÃO E UX DE FORMULÁRIOS ====================
+function showFieldError(inputEl, message) {
+    if (!inputEl) return;
+    inputEl.classList.add('input-error');
+    inputEl.setAttribute('aria-invalid', 'true');
+    let err = inputEl.parentNode.querySelector('.error-text');
+    if (!err) {
+        err = document.createElement('div');
+        err.className = 'error-text';
+        inputEl.parentNode.appendChild(err);
+    }
+    err.textContent = message;
+    inputEl.classList.remove('shake');
+    void inputEl.offsetWidth;
+    inputEl.classList.add('shake');
+}
+
+function clearFieldError(inputEl) {
+    if (!inputEl) return;
+    inputEl.classList.remove('input-error');
+    inputEl.removeAttribute('aria-invalid');
+    const err = inputEl.parentNode.querySelector('.error-text');
+    if (err) err.textContent = '';
+}
+
+function isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 // ==================== EXIBIÇÃO DE INFORMAÇÕES ====================
@@ -151,6 +181,27 @@ function setupEventListeners() {
             }
         });
     }
+
+    // Theme toggle (acessibilidade + preferência)
+    const themeToggle = document.getElementById('themeToggle');
+    const applyTheme = (t) => {
+        if (t === 'dark') {
+            document.documentElement.classList.add('theme-dark');
+            if (themeToggle) themeToggle.setAttribute('aria-pressed', 'true');
+        } else {
+            document.documentElement.classList.remove('theme-dark');
+            if (themeToggle) themeToggle.setAttribute('aria-pressed', 'false');
+        }
+        try { localStorage.setItem('theme', t); } catch(e) {}
+    };
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    applyTheme(savedTheme);
+    if (themeToggle) {
+        themeToggle.addEventListener('click', function() {
+            const isDark = document.documentElement.classList.contains('theme-dark');
+            applyTheme(isDark ? 'light' : 'dark');
+        });
+    }
     
     // Menu items
     document.querySelectorAll('.menu-item').forEach(item => {
@@ -188,12 +239,104 @@ function setupEventListeners() {
                 const placeholder = document.getElementById('imagePlaceholder');
                 
                 img.src = event.target.result;
+                img.loading = 'lazy';
+                img.alt = 'Preview da imagem selecionada';
                 img.style.display = 'block';
                 placeholder.style.display = 'none';
             };
             reader.readAsDataURL(file);
         }
     });
+
+    // Limpar erros ao digitar nos formulários
+    document.querySelectorAll('.form-estoque input, .form-estoque select, .form-estoque textarea').forEach(el => {
+        el.addEventListener('input', () => clearFieldError(el));
+    });
+
+    // Validação live para confirmação de senha no formulário de usuário
+    const senhaLive = document.getElementById('usuarioSenha');
+    const senhaConfirmLive = document.getElementById('usuarioSenhaConfirm');
+    if (senhaLive && senhaConfirmLive) {
+        const validateMatch = () => {
+            const s = senhaLive.value || '';
+            const c = senhaConfirmLive.value || '';
+            if (!c) {
+                senhaLive.classList.remove('input-valid');
+                senhaConfirmLive.classList.remove('input-valid');
+                clearFieldError(senhaConfirmLive);
+                return;
+            }
+            if (s === c) {
+                clearFieldError(senhaConfirmLive);
+                senhaLive.classList.add('input-valid');
+                senhaConfirmLive.classList.add('input-valid');
+            } else {
+                senhaLive.classList.remove('input-valid');
+                senhaConfirmLive.classList.remove('input-valid');
+                showFieldError(senhaConfirmLive, 'Senhas não coincidem');
+            }
+        };
+        senhaLive.addEventListener('input', validateMatch);
+        senhaConfirmLive.addEventListener('input', validateMatch);
+        senhaConfirmLive.addEventListener('blur', validateMatch);
+
+        // Checklist dinâmico de requisitos de senha
+        const checklist = document.getElementById('passwordChecklist');
+        const ruleLength = checklist ? checklist.querySelector('[data-rule="length"]') : null;
+        const ruleLetters = checklist ? checklist.querySelector('[data-rule="letters"]') : null;
+        const ruleNumbers = checklist ? checklist.querySelector('[data-rule="numbers"]') : null;
+        const ruleUpper = checklist ? checklist.querySelector('[data-rule="uppercase"]') : null;
+        const ruleSpecial = checklist ? checklist.querySelector('[data-rule="special"]') : null;
+
+        const updateChecklist = () => {
+            if (!checklist) return;
+            const value = senhaLive.value || '';
+            const okLength = value.length >= 6;
+            const okLetters = /[A-Za-zÀ-ÖØ-öø-ÿ]/.test(value);
+            const okNumbers = /\d/.test(value);
+            const okUpper = /[A-ZÀ-Ö]/.test(value);
+            const okSpecial = /[^A-Za-z0-9\s]/.test(value);
+
+            const toggle = (el, ok) => { if (!el) return; if (ok) el.classList.add('valid'); else el.classList.remove('valid'); };
+            toggle(ruleLength, okLength);
+            toggle(ruleLetters, okLetters);
+            toggle(ruleNumbers, okNumbers);
+            toggle(ruleUpper, okUpper);
+            toggle(ruleSpecial, okSpecial);
+        };
+
+        senhaLive.addEventListener('input', updateChecklist);
+        // garantir estado inicial
+        updateChecklist();
+    }
+
+    // Validação live para confirmação de preço no formulário de adicionar item
+    const precoLive = document.getElementById('itemPreco');
+    const precoConfirmLive = document.getElementById('itemPrecoConfirm');
+    if (precoLive && precoConfirmLive) {
+        const validatePriceMatch = () => {
+            const p = precoLive.value !== '' ? parseFloat(precoLive.value) : null;
+            const c = precoConfirmLive.value !== '' ? parseFloat(precoConfirmLive.value) : null;
+            if (precoConfirmLive.value === '') {
+                precoLive.classList.remove('input-valid');
+                precoConfirmLive.classList.remove('input-valid');
+                clearFieldError(precoConfirmLive);
+                return;
+            }
+            if (p !== null && c !== null && Math.abs(p - c) < 0.0001) {
+                clearFieldError(precoConfirmLive);
+                precoLive.classList.add('input-valid');
+                precoConfirmLive.classList.add('input-valid');
+            } else {
+                precoLive.classList.remove('input-valid');
+                precoConfirmLive.classList.remove('input-valid');
+                showFieldError(precoConfirmLive, 'Preços não coincidem');
+            }
+        };
+        precoLive.addEventListener('input', validatePriceMatch);
+        precoConfirmLive.addEventListener('input', validatePriceMatch);
+        precoConfirmLive.addEventListener('blur', validatePriceMatch);
+    }
     
     // Busca de estoque
     document.getElementById('searchInput').addEventListener('input', filterEstoque);
@@ -214,17 +357,25 @@ function setupEventListeners() {
     
     // Modal
     document.getElementById('btnCancel').addEventListener('click', closeModal);
+
+    // Attach button microinteractions (ripple, press animations)
+    attachButtonEffects();
 }
 
 function loadPage(page) {
+    if (pageSwitchTimeout) {
+        clearTimeout(pageSwitchTimeout);
+        pageSwitchTimeout = null;
+    }
+
     // Esconder todas as páginas
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    
+
     // Mostrar página selecionada
     const selectedPage = document.getElementById('page-' + page);
     if (selectedPage) {
         selectedPage.classList.add('active');
-        
+
         // Executar ações específicas da página
         if (page === 'dashboard') {
             displayDashboard();
@@ -240,6 +391,19 @@ function loadPage(page) {
             displayUsuarios();
         }
     }
+}
+
+// Loader helpers
+function showLoader() {
+    const loader = document.getElementById('pageLoader');
+    if (!loader) return;
+    loader.classList.add('visible');
+}
+
+function hideLoader() {
+    const loader = document.getElementById('pageLoader');
+    if (!loader) return;
+    loader.classList.remove('visible');
 }
 
 // ==================== ESTOQUE ====================
@@ -272,7 +436,7 @@ function displayEstoque() {
 
     function makeRow(item) {
         const row = document.createElement('tr');
-        const imgThumb = item.imagem ? `<img src="${item.imagem}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">` : '<span style="color: #999;">Sem imagem</span>';
+        const imgThumb = item.imagem ? `<img src="${item.imagem}" loading="lazy" alt="${(item.nome||'Imagem')}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">` : '<span style="color: #999;">Sem imagem</span>';
         let actions = '';
         if (canAdd()) actions += `<button class="btn-small btn-edit" onclick="editarItem(${item.id})">✏️ Editar</button>`;
         if (canDelete()) actions += `<button class="btn-small btn-delete" onclick="deleteItem(${item.id})">🗑️ Deletar</button>`;
@@ -421,6 +585,8 @@ function editarItem(itemId) {
         document.getElementById('itemUnidade').value = item.unidade;
         document.getElementById('itemCategoria').value = item.categoria;
         document.getElementById('itemPreco').value = item.preco || '';
+        const precoConfirmField = document.getElementById('itemPrecoConfirm');
+        if (precoConfirmField) precoConfirmField.value = item.preco || '';
         document.getElementById('itemFornecedor').value = item.fornecedor || '';
         document.getElementById('itemDataProducao').value = item.dataProducao || '';
         document.getElementById('itemDataValidade').value = item.dataValidade || '';
@@ -476,12 +642,19 @@ function handleAdicionarItem(e) {
         return;
     }
     
-    const nome = document.getElementById('itemNome').value;
+    const nomeEl = document.getElementById('itemNome');
+    const nome = nomeEl.value;
     const codigo = document.getElementById('itemCodigo').value.trim();
-    const quantidade = parseInt(document.getElementById('itemQuantidade').value);
-    const unidade = document.getElementById('itemUnidade').value;
-    const categoria = document.getElementById('itemCategoria').value;
+    const quantidadeEl = document.getElementById('itemQuantidade');
+    const quantidade = parseInt(quantidadeEl.value);
+    const unidadeEl = document.getElementById('itemUnidade');
+    const unidade = unidadeEl.value;
+    const categoriaEl = document.getElementById('itemCategoria');
+    const categoria = categoriaEl.value;
     const preco = parseFloat(document.getElementById('itemPreco').value) || 0;
+    const precoEl = document.getElementById('itemPreco');
+    const precoConfirmEl = document.getElementById('itemPrecoConfirm');
+    const precoConfirm = precoConfirmEl ? (parseFloat(precoConfirmEl.value) || 0) : null;
     const fornecedor = document.getElementById('itemFornecedor').value;
     const dataProducao = document.getElementById('itemDataProducao').value;
     const dataValidade = document.getElementById('itemDataValidade').value;
@@ -489,6 +662,31 @@ function handleAdicionarItem(e) {
     const imagem = imagemImg.style.display !== 'none' ? imagemImg.src : null;
     const editId = this.dataset.editId;
     
+    // Validações básicas
+    if (!nome || nome.trim().length < 2) {
+        showFieldError(nomeEl, 'Nome obrigatório (mín. 2 caracteres)');
+        return;
+    }
+    if (!Number.isFinite(quantidade) || quantidade <= 0) {
+        showFieldError(quantidadeEl, 'Quantidade inválida');
+        return;
+    }
+    if (!unidade) {
+        showFieldError(unidadeEl, 'Selecione uma unidade');
+        return;
+    }
+    if (!categoria) {
+        showFieldError(categoriaEl, 'Selecione uma categoria');
+        return;
+    }
+    // Validação de confirmação de preço (se presente)
+    if (precoConfirmEl) {
+        if (Number.isFinite(preco) && preco !== precoConfirm) {
+            showFieldError(precoConfirmEl, 'Preços não coincidem');
+            return;
+        }
+    }
+
     if (editId) {
         // Atualizar item existente
         const item = estoque.find(i => i.id == editId);
@@ -558,20 +756,29 @@ function handleRetirarItem(e) {
         return;
     }
     
-    const itemId = document.getElementById('itemSelecionado').value;
-    const quantidade = parseInt(document.getElementById('quantidadeRetirar').value);
+    const itemSelect = document.getElementById('itemSelecionado');
+    const itemId = itemSelect.value;
+    const quantidadeEl = document.getElementById('quantidadeRetirar');
+    const quantidade = parseInt(quantidadeEl.value);
     const motivo = document.getElementById('motivo').value;
     const observacoes = document.getElementById('observacoes').value;
     
     const item = estoque.find(i => i.id == itemId);
     
+    if (!itemId) {
+        showFieldError(itemSelect, 'Selecione um item');
+        return;
+    }
     if (!item) {
         showMessage('Item não encontrado!', 'error', 'page-retirar');
         return;
     }
-    
+    if (!Number.isFinite(quantidade) || quantidade <= 0) {
+        showFieldError(quantidadeEl, 'Quantidade inválida');
+        return;
+    }
     if (quantidade > item.quantidade) {
-        showMessage(`Quantidade indisponível! Disponível: ${item.quantidade}`, 'error', 'page-retirar');
+        showFieldError(quantidadeEl, `Disponível: ${item.quantidade}`);
         return;
     }
     
@@ -599,16 +806,26 @@ function handleReporItem(e) {
         return;
     }
     
-    const itemId = document.getElementById('itemReposicao').value;
-    const quantidade = parseInt(document.getElementById('quantidadeRepor').value);
+    const itemSelect = document.getElementById('itemReposicao');
+    const itemId = itemSelect.value;
+    const quantidadeEl = document.getElementById('quantidadeRepor');
+    const quantidade = parseInt(quantidadeEl.value);
     const dataRepor = document.getElementById('dataRepor').value;
     const fornecedor = document.getElementById('fornecedor').value;
     const custo = parseFloat(document.getElementById('custRepor').value) || 0;
     
     const item = estoque.find(i => i.id == itemId);
     
+    if (!itemId) {
+        showFieldError(itemSelect, 'Selecione um item');
+        return;
+    }
     if (!item) {
         showMessage('Item não encontrado!', 'error', 'page-repor');
+        return;
+    }
+    if (!Number.isFinite(quantidade) || quantidade <= 0) {
+        showFieldError(quantidadeEl, 'Quantidade inválida');
         return;
     }
     
@@ -682,6 +899,23 @@ function displayDashboard() {
     
     // Exibir categorias
     displayCategorias();
+
+    // Adicionar animações suaves aos cartões e categorias (entrada em cascata)
+    setTimeout(() => {
+        const statCards = document.querySelectorAll('.stat-card');
+        statCards.forEach((el, i) => {
+            el.classList.remove('pop');
+            void el.offsetWidth;
+            setTimeout(() => el.classList.add('pop'), i * 120);
+        });
+
+        const catCards = document.querySelectorAll('.category-card');
+        catCards.forEach((el, i) => {
+            el.classList.remove('show');
+            void el.offsetWidth;
+            setTimeout(() => el.classList.add('show'), i * 100);
+        });
+    }, 60);
 }
 
 function displayAlertas() {
@@ -799,6 +1033,39 @@ function filterHistorico() {
     });
 }
 
+// ==================== MICROINTERAÇÕES DE BOTÕES (RIPPLE) ====================
+function createRipple(element, event) {
+    const rect = element.getBoundingClientRect();
+    const ripple = document.createElement('span');
+    ripple.className = 'ripple';
+    const size = Math.max(rect.width, rect.height) * 1.2;
+    ripple.style.width = ripple.style.height = size + 'px';
+    const x = event.clientX - rect.left - size / 2;
+    const y = event.clientY - rect.top - size / 2;
+    ripple.style.left = x + 'px';
+    ripple.style.top = y + 'px';
+    element.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 700);
+}
+
+function attachButtonEffects() {
+    // Make buttons ripple-capable
+    document.querySelectorAll('button, .btn-small, .btn-primary, .btn-secondary').forEach(btn => {
+        // Ensure positioned container
+        if (!btn.classList.contains('ripple-container')) {
+            btn.classList.add('ripple-container');
+        }
+
+        btn.addEventListener('click', function(e) {
+            createRipple(this, e);
+            // tiny scale feedback
+            this.style.transition = 'transform 0.12s ease';
+            this.style.transform = 'scale(0.985)';
+            setTimeout(() => { this.style.transform = ''; }, 120);
+        });
+    });
+}
+
 function clearHistorico() {
     showModal(
         'Limpar Histórico',
@@ -849,14 +1116,14 @@ function closeModal() {
 // ==================== LOGOUT ====================
 
 function logout() {
-    showModal(
-        'Confirmar Saída',
-        'Tem certeza que deseja sair?',
-        () => {
-            localStorage.removeItem('currentUser');
-            window.location.href = './index.html';
-        }
-    );
+    // Logout imediato sem confirmação modal
+    if (pageSwitchTimeout) {
+        clearTimeout(pageSwitchTimeout);
+        pageSwitchTimeout = null;
+    }
+    hideLoader();
+    localStorage.removeItem('currentUser');
+    window.location.replace('./index.html');
 }
 
 // ==================== AUTOMAÇÃO DE ESTOQUE BAIXO ====================
@@ -999,39 +1266,104 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             
             const editUsername = this.dataset.editUsername;
-            const username = document.getElementById('usuarioUsername').value.trim().toLowerCase();
-            const nome = document.getElementById('usuarioNome').value.trim();
-            const email = document.getElementById('usuarioEmail').value.trim().toLowerCase();
-            const senha = document.getElementById('usuarioSenha').value;
-            const cargo = document.getElementById('usuarioCargo').value;
-            
-            const msgDiv = document.getElementById('msgUsuario');
-            msgDiv.textContent = '';
-            
-            // Validações
-            if (!editUsername && username.length < 4) {
-                msgDiv.textContent = 'Usuário deve ter no mínimo 4 caracteres!';
-                msgDiv.className = 'message error';
-                return;
-            }
-            
-            if (senha.length < 6 && !editUsername) {
-                msgDiv.textContent = 'Senha deve ter no mínimo 6 caracteres!';
-                msgDiv.className = 'message error';
-                return;
-            }
-            
-            if (!nome) {
-                msgDiv.textContent = 'Preencha o nome!';
-                msgDiv.className = 'message error';
-                return;
-            }
-            
-            if (!email) {
-                msgDiv.textContent = 'Preencha o email pessoal!';
-                msgDiv.className = 'message error';
-                return;
-            }
+                const usernameEl = document.getElementById('usuarioUsername');
+                const username = usernameEl.value.trim().toLowerCase();
+                const nomeEl = document.getElementById('usuarioNome');
+                const nome = nomeEl.value.trim();
+                const emailEl = document.getElementById('usuarioEmail');
+                const email = emailEl.value.trim().toLowerCase();
+                const senhaEl = document.getElementById('usuarioSenha');
+                const senha = senhaEl.value;
+                const cargoEl = document.getElementById('usuarioCargo');
+                const cargo = cargoEl.value;
+                const confirmEl = document.getElementById('usuarioSenhaConfirm');
+                const senhaConfirm = confirmEl ? (confirmEl.value || '') : '';
+
+                const msgDiv = document.getElementById('msgUsuario');
+                msgDiv.textContent = '';
+                msgDiv.className = 'message';
+
+                // Limpar erros prévios
+                clearFieldError(usernameEl);
+                clearFieldError(nomeEl);
+                clearFieldError(emailEl);
+                clearFieldError(senhaEl);
+                clearFieldError(cargoEl);
+
+                // Validações inline
+                if (!editUsername && username.length < 4) {
+                    showFieldError(usernameEl, 'Usuário deve ter no mínimo 4 caracteres');
+                    return;
+                }
+
+                // Senha obrigatória ao criar; se editar, senha pode ficar vazia
+                if (!editUsername && senha.length < 6) {
+                    showFieldError(senhaEl, 'Senha deve ter no mínimo 6 caracteres');
+                    return;
+                }
+                // Se senha fornecida, checar complexidade mínima (letras, números, maiúscula e especial)
+                if (senha) {
+                    const okLength = senha.length >= 6;
+                    const okLetters = /[A-Za-zÀ-ÖØ-öø-ÿ]/.test(senha);
+                    const okNumbers = /\d/.test(senha);
+                    const okUpper = /[A-ZÀ-Ö]/.test(senha);
+                    const okSpecial = /[^A-Za-z0-9\s]/.test(senha);
+                    const allOk = okLength && okLetters && okNumbers && okUpper && okSpecial;
+
+                    // Atualizar checklist visualmente se presente
+                    const checklist = document.getElementById('passwordChecklist');
+                    if (checklist) {
+                        const map = { length: okLength, letters: okLetters, numbers: okNumbers, uppercase: okUpper, special: okSpecial };
+                        Object.keys(map).forEach(rule => {
+                            const el = checklist.querySelector(`[data-rule="${rule}"]`);
+                            if (!el) return;
+                            el.classList.remove('valid', 'invalid');
+                            const icon = el.querySelector('.check-icon');
+                            if (map[rule]) {
+                                el.classList.add('valid');
+                                if (icon) icon.textContent = '✓';
+                            } else {
+                                el.classList.add('invalid');
+                                if (icon) icon.textContent = '✕';
+                            }
+                        });
+                    }
+
+                    if (!allOk) {
+                        showFieldError(senhaEl, 'Senha precisa conter letras, números, ao menos uma maiúscula e um caractere especial');
+                        senhaEl.classList.add('shake');
+                        setTimeout(() => senhaEl.classList.remove('shake'), 400);
+                        return;
+                    }
+                }
+
+                // Confirmação de senha
+                if (!editUsername) {
+                    if (senha !== senhaConfirm) {
+                        showFieldError(confirmEl, 'Senhas não coincidem');
+                        return;
+                    }
+                } else {
+                    // Ao editar, se alterar a senha, confirmação deve bater
+                    if (senha && senha !== senhaConfirm) {
+                        showFieldError(confirmEl, 'Senhas não coincidem');
+                        return;
+                    }
+                }
+
+                if (!nome) {
+                    showFieldError(nomeEl, 'Preencha o nome');
+                    return;
+                }
+
+                if (!email) {
+                    showFieldError(emailEl, 'Preencha o email pessoal');
+                    return;
+                }
+                if (!isValidEmail(email)) {
+                    showFieldError(emailEl, 'Email inválido');
+                    return;
+                }
             
             const usersData = localStorage.getItem('users');
             const users = JSON.parse(usersData);
